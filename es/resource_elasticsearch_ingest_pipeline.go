@@ -9,11 +9,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	olivere "github.com/olivere/elastic/v7"
 	"io/ioutil"
 	"strings"
 
-	elastic "github.com/elastic/go-elasticsearch/v8"
+	eshandler "github.com/disaster37/es-handler/v8"
+	olivere "github.com/olivere/elastic/v7"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ func resourceElasticsearchIngestPipeline() *schema.Resource {
 		Delete: resourceElasticsearchIngestPipelineDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -47,9 +48,9 @@ func resourceElasticsearchIngestPipeline() *schema.Resource {
 }
 
 // resourceElasticsearchIngestPipelineCreate create ingest pipeline
-func resourceElasticsearchIngestPipelineCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceElasticsearchIngestPipelineCreate(d *schema.ResourceData, meta interface{}) (err error) {
 
-	err := createIngestPipeline(d, meta)
+	err = createIngestPipeline(d, meta)
 	if err != nil {
 		return err
 	}
@@ -58,8 +59,8 @@ func resourceElasticsearchIngestPipelineCreate(d *schema.ResourceData, meta inte
 }
 
 // resourceElasticsearchIngestPipelineUpdate update ingest pipeline
-func resourceElasticsearchIngestPipelineUpdate(d *schema.ResourceData, meta interface{}) error {
-	err := createIngestPipeline(d, meta)
+func resourceElasticsearchIngestPipelineUpdate(d *schema.ResourceData, meta interface{}) (err error) {
+	err = createIngestPipeline(d, meta)
 	if err != nil {
 		return err
 	}
@@ -67,10 +68,10 @@ func resourceElasticsearchIngestPipelineUpdate(d *schema.ResourceData, meta inte
 }
 
 // resourceElasticsearchIngestPipelineRead read ingest pipeline
-func resourceElasticsearchIngestPipelineRead(d *schema.ResourceData, meta interface{}) error {
+func resourceElasticsearchIngestPipelineRead(d *schema.ResourceData, meta interface{}) (err error) {
 	id := d.Id()
 
-	client := meta.(*elastic.Client)
+	client := meta.(eshandler.ElasticsearchHandler).Client()
 	res, err := client.API.Ingest.GetPipeline(
 		client.API.Ingest.GetPipeline.WithPipelineID(id),
 		client.API.Ingest.GetPipeline.WithContext(context.Background()),
@@ -112,17 +113,21 @@ func resourceElasticsearchIngestPipelineRead(d *schema.ResourceData, meta interf
 	}
 
 	log.Debugf("Get ingest pipeline %s successfully:%+v", id, ingestPipelineJSON)
-	d.Set("name", d.Id())
-	d.Set("pipeline", string(ingestPipelineJSON))
+	if err = d.Set("name", d.Id()); err != nil {
+		return err
+	}
+	if err = d.Set("pipeline", string(ingestPipelineJSON)); err != nil {
+		return err
+	}
 	return nil
 }
 
 // resourceElasticsearchIngestPipelineDelete delete ingest pipeline
-func resourceElasticsearchIngestPipelineDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceElasticsearchIngestPipelineDelete(d *schema.ResourceData, meta interface{}) (err error) {
 
 	id := d.Id()
 
-	client := meta.(*elastic.Client)
+	client := meta.(eshandler.ElasticsearchHandler).Client()
 	res, err := client.API.Ingest.DeletePipeline(
 		id,
 		client.API.Ingest.DeletePipeline.WithContext(context.Background()),
@@ -151,11 +156,11 @@ func resourceElasticsearchIngestPipelineDelete(d *schema.ResourceData, meta inte
 }
 
 // createIngestPipeline create or update ingest pipeline
-func createIngestPipeline(d *schema.ResourceData, meta interface{}) error {
+func createIngestPipeline(d *schema.ResourceData, meta interface{}) (err error) {
 	name := d.Get("name").(string)
 	pipeline := d.Get("pipeline").(string)
 
-	client := meta.(*elastic.Client)
+	client := meta.(eshandler.ElasticsearchHandler).Client()
 	res, err := client.API.Ingest.PutPipeline(
 		name,
 		strings.NewReader(pipeline),

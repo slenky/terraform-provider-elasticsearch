@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	elastic "github.com/elastic/go-elasticsearch/v8"
+	eshandler "github.com/disaster37/es-handler/v8"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -69,9 +69,10 @@ func resourceElasticsearchTransform() *schema.Resource {
 		Create: resourceElasticsearchTransformCreate,
 		Read:   resourceElasticsearchTransformRead,
 		Delete: resourceElasticsearchTransformDelete,
+		Update: resourceElasticsearchTransformUpdate,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -82,7 +83,6 @@ func resourceElasticsearchTransform() *schema.Resource {
 			},
 			"transform": {
 				Type:             schema.TypeString,
-				ForceNew:         true,
 				Required:         true,
 				DiffSuppressFunc: diffSuppressTransform,
 			},
@@ -91,9 +91,9 @@ func resourceElasticsearchTransform() *schema.Resource {
 }
 
 // resourceElasticsearchTransformCreate create transform
-func resourceElasticsearchTransformCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceElasticsearchTransformCreate(d *schema.ResourceData, meta interface{}) (err error) {
 
-	err := createTransform(d, meta)
+	err = createTransform(d, meta)
 	if err != nil {
 		return err
 	}
@@ -102,8 +102,8 @@ func resourceElasticsearchTransformCreate(d *schema.ResourceData, meta interface
 }
 
 // resourceElasticsearchTransformUpdate update transform
-func resourceElasticsearchTransformUpdate(d *schema.ResourceData, meta interface{}) error {
-	err := createTransform(d, meta)
+func resourceElasticsearchTransformUpdate(d *schema.ResourceData, meta interface{}) (err error) {
+	err = createTransform(d, meta)
 	if err != nil {
 		return err
 	}
@@ -111,10 +111,10 @@ func resourceElasticsearchTransformUpdate(d *schema.ResourceData, meta interface
 }
 
 // resourceElasticsearchTransformRead read transform
-func resourceElasticsearchTransformRead(d *schema.ResourceData, meta interface{}) error {
+func resourceElasticsearchTransformRead(d *schema.ResourceData, meta interface{}) (err error) {
 	id := d.Id()
 
-	client := meta.(*elastic.Client)
+	client := meta.(eshandler.ElasticsearchHandler).Client()
 	res, err := client.API.TransformGetTransform(
 		client.API.TransformGetTransform.WithTransformID(id),
 		client.API.TransformGetTransform.WithContext(context.Background()),
@@ -156,17 +156,21 @@ func resourceElasticsearchTransformRead(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Debugf("Get transform %s successfully:%+v", id, transformJSON)
-	d.Set("name", d.Id())
-	d.Set("transform", string(transformJSON))
+	if err = d.Set("name", d.Id()); err != nil {
+		return err
+	}
+	if err = d.Set("transform", string(transformJSON)); err != nil {
+		return err
+	}
 	return nil
 }
 
 // resourceElasticsearchTransformDelete delete transform
-func resourceElasticsearchTransformDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceElasticsearchTransformDelete(d *schema.ResourceData, meta interface{}) (err error) {
 
 	id := d.Id()
 
-	client := meta.(*elastic.Client)
+	client := meta.(eshandler.ElasticsearchHandler).Client()
 	res, err := client.API.TransformDeleteTransform(
 		id,
 		client.API.TransformDeleteTransform.WithContext(context.Background()),
@@ -195,11 +199,11 @@ func resourceElasticsearchTransformDelete(d *schema.ResourceData, meta interface
 }
 
 // createTransform create or update transform
-func createTransform(d *schema.ResourceData, meta interface{}) error {
+func createTransform(d *schema.ResourceData, meta interface{}) (err error) {
 	name := d.Get("name").(string)
 	transform := d.Get("transform").(string)
 
-	client := meta.(*elastic.Client)
+	client := meta.(eshandler.ElasticsearchHandler).Client()
 	res, err := client.API.TransformPutTransform(
 		strings.NewReader(transform),
 		name,
