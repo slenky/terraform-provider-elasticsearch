@@ -37,7 +37,9 @@ jobs:
       - name: Run build
         run: make build
       - name: Run acceptance tests
-        run: ELASTICSEARCH_URLS="http://localhost:9200" ELASTICSEARCH_USERNAME="elastic" ELASTICSEARCH_PASSWORD="changeme" make testacc
+        run: |
+          mv es/resource_elasticsearch_license_test.go es/resource_elasticsearch_license_test.go.disable
+          ELASTICSEARCH_URLS="http://localhost:9200" ELASTICSEARCH_USERNAME="elastic" ELASTICSEARCH_PASSWORD="changeme" make testacc
       - name: Run acceptance test on license resource
         run: |
           set -e
