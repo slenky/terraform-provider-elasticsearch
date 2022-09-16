@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/coreos/go-semver v0.3.0
-	github.com/disaster37/es-handler/v8 v8.0.2-0.20220916122053-e3747bb70084
+	github.com/disaster37/es-handler/v8 v8.0.2
 	github.com/elastic/go-elasticsearch/v8 v8.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.22.0
 	github.com/mitchellh/go-homedir v1.1.0
