@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/coreos/go-semver v0.3.0
-	github.com/disaster37/es-handler/v8 v8.0.2-0.20220915144108-3f66fa4b4d22
+	github.com/disaster37/es-handler/v8 v8.0.2-0.20220916122053-e3747bb70084
 	github.com/elastic/go-elasticsearch/v8 v8.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.22.0
 	github.com/mitchellh/go-homedir v1.1.0
@@ -58,7 +58,7 @@ require (
 	github.com/zclconf/go-cty v1.11.0 // indirect
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167 // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
-	golang.org/x/sys v0.0.0-20220913175220-63ea55921009 // indirect
+	golang.org/x/sys v0.0.0-20220915200043-7b5979e65e41 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200711021454-869866162049 // indirect
