@@ -15,6 +15,7 @@ We fork this project for the following items:
 
 ## Installation
 
+
 [Download a binary](https://github.com/disaster37/terraform-provider-elasticsearch/releases), and put it in a good spot on your system. Then update your `~/.terraformrc` to refer to the binary:
 
 ```hcl
